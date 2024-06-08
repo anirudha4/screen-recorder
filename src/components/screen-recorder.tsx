@@ -6,11 +6,15 @@ import { useState } from "react";
 import { Alert, AlertTitle } from "./ui/alert";
 import { RocketIcon, Video } from "lucide-react";
 import { ExclamationTriangleIcon } from "@radix-ui/react-icons"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
 
 
 type Props = {}
 const ScreenRecorder = ({ }: Props) => {
-    const [fileName, setFileName] = useState('');
+    const [conf, setConf] = useState({
+        fileName: '',
+        format: '.mp4'
+    })
     const [error, setError] = useState('');
     const [success, setSuccess] = useState('');
     const [loading, setLoading] = useState(false);
@@ -36,10 +40,12 @@ const ScreenRecorder = ({ }: Props) => {
                  * @todo - Needs optimization
                  */
                 for (const chunk of chunks) {
-                    const videoBlob = new Blob([chunk], { type: 'video/webm' });
+                    const type = conf.format.split('.')[1]
+                    const videoBlob = new Blob([chunk], { type: `video/${type}` });
                     const formData = new FormData();
                     formData.append('video', videoBlob);
-                    formData.append('fileName', fileName);
+                    formData.append('fileName', conf.fileName);
+                    formData.append('format', conf.format);
                     setLoading(true);
                     const response = await fetch('/api/record', {
                         method: 'POST',
@@ -75,10 +81,20 @@ const ScreenRecorder = ({ }: Props) => {
             <div className="flex items-center justify-end gap-4 p-4 border-t">
                 <Input
                     placeholder="Enter file name"
-                    value={fileName}
-                    onChange={e => setFileName(e.target.value)}
+                    value={conf.fileName}
+                    onChange={e => setConf({ ...conf, fileName: e.target.value })}
                 />
-                <Button disabled={!fileName || loading} onClick={handleStartRecording} size={'sm'}>
+                <Select value={conf.format} onValueChange={value => setConf({ ...conf, format: value })}>
+                    <SelectTrigger className="w-[100px]">
+                        <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                        <SelectItem value=".mp4">MP4</SelectItem>
+                        <SelectItem value=".mkv">MKV</SelectItem>
+                        <SelectItem value=".webm">WEBM</SelectItem>
+                    </SelectContent>
+                </Select>
+                <Button disabled={!conf.fileName || loading} onClick={handleStartRecording} size={'sm'}>
                     {loading ? 'Saving Recording' : 'Start Recording'}
                 </Button>
             </div>
