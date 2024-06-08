@@ -9,7 +9,12 @@ export async function POST(req: Request) {
         const fileName: any = formData.get('fileName');
         const buffer = await video.arrayBuffer();
         
-        fs.writeFileSync(`./public/records/${fileName}.webm`, Buffer.from(buffer));
+        const path = `./public/records/${fileName}.webm`
+        if(fs.existsSync(path)) {
+            fs.appendFileSync(path, Buffer.from(buffer));
+        } else {
+            fs.writeFileSync(path, Buffer.from(buffer));
+        }
 
         return NextResponse.json({ status: "success", videoUrl: `http://localhost:3000/records/${fileName}.webm` })
     }

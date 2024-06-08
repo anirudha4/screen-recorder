@@ -30,16 +30,27 @@ const ScreenRecorder = ({ }: Props) => {
             }
 
             recorder.onstop = async () => {
-                const videoBlob = new Blob(chunks, { type: 'video/webm' });
-                const formData = new FormData();
-                formData.append('video', videoBlob);
-                formData.append('fileName', fileName);
-                setLoading(true);
-                const response = await fetch('/api/record', {
-                    method: 'POST',
-                    body: formData
-                });
-                const data = await response.json();
+                let data = null;
+                /**
+                 * Not the best way.
+                 * @todo - Needs optimization
+                 */
+                for (const chunk of chunks) {
+                    const videoBlob = new Blob([chunk], { type: 'video/webm' });
+                    const formData = new FormData();
+                    formData.append('video', videoBlob);
+                    formData.append('fileName', fileName);
+                    setLoading(true);
+                    const response = await fetch('/api/record', {
+                        method: 'POST',
+                        body: formData
+                    });
+                    data = await response.json();
+                }
+                /**
+                 * currently we are only handling the last request, if it is successful or not
+                 * @todo - We should check for each chunk request and do a rerequest
+                 */
                 if (data.status !== 'success') {
                     return setError('Something went wrong. Please try again later. Thank You!')
                 }
@@ -76,7 +87,7 @@ const ScreenRecorder = ({ }: Props) => {
                     <Alert className="mt-3">
                         <RocketIcon className="h-4 w-4" />
                         <AlertTitle>
-                            <a href={success}>View recorded video</a>
+                            <a target="_blank" href={success}>View recorded video</a>
                         </AlertTitle>
                     </Alert>
                 </div>
