@@ -1,25 +1,40 @@
 import { NextResponse } from "next/server";
-import fs from 'fs'
-import os from 'os'
-import path from 'path';
+import { createClient } from "@/lib/supabase";
+import { getUser } from "@/lib/user";
+import { CreateRecordingType } from "@/types/recording";
+
 export async function POST(req: Request) {
     try {
+        const user = await getUser();
+        if (!user)
+            return NextResponse.json({ status: 'Unauthorized' });
         const formData = await req.formData();
         const video: any = formData.get('video');
-        const fileName: any = formData.get('fileName');
+        const fileName: any = formData.get('fileName')
         const format: any = formData.get('format');
-        const buffer = await video.arrayBuffer();
-        
-        const path = `./public/records/${fileName}${format}`
-        if(fs.existsSync(path)) {
-            fs.appendFileSync(path, Buffer.from(buffer));
-        } else {
-            fs.writeFileSync(path, Buffer.from(buffer));
+        const arrayBuffer = await video.arrayBuffer();
+        const buffer = Buffer.from(arrayBuffer);
+        const supabase = createClient();
+        const type = format.split('.')[1]
+        const { data, error } = await supabase.storage.from('recordings').upload(`${user?.id}/${fileName}${format}`, buffer, {
+            contentType: `video/${type}`
+        });
+        if (error) {
+            console.log(error);
+            return NextResponse.json({ status: "failure", error: 'Something went wrong' });
         }
 
-        return NextResponse.json({ status: "success", videoUrl: `http://localhost:3000/records/${path}` })
+        const { data: { publicUrl } } = supabase.storage.from('recordings').getPublicUrl(data.path);
+        const recording: CreateRecordingType = {
+            download_url: publicUrl,
+            filename: fileName + Date.now() + format,
+            user_id: user.id,
+            path: data.path
+        }
+        await supabase.from('recordings').insert(recording);
+        return NextResponse.json({ status: "success" });
     }
     catch (e: any) {
-        return NextResponse.json({ status: "fail", data: e })
+        return NextResponse.json({ status: "failure", data: e })
     }
 }
