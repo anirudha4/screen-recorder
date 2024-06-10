@@ -7,7 +7,7 @@ type Props = {
 }
 const Loader = ({ size, className }: Props) => {
     return (
-        <RiLoader4Line size={size} className={cn(classNames("animate-spin", className))} />
+        <RiLoader4Line size={size} className={cn(classNames("animate-spin text-primary", className))} />
     )
 }
 export default Loader

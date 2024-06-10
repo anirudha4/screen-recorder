@@ -4,6 +4,8 @@ import classNames from "classnames";
 import { displayFont } from "@/app/display-font";
 import Logo from "@/components/ui/logo";
 import AuthButton from "@/components/auth/button";
+import { Separator } from "@/components/ui/separator";
+
 type Props = {
   searchParams?: { [key: string]: string | string[] | undefined };
 }
@@ -17,7 +19,9 @@ const Auth = ({ }: Props) => {
               <Logo />
             </p>
           </div>
-          <AuthButton social="notion" />
+          <AuthButton social="notion">
+            Continue with Notion
+          </AuthButton>
         </div>
       </Suspense>
     </div>
